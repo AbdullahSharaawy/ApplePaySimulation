@@ -1,39 +1,28 @@
-name: Build and Deploy ASP.NET App
+name: Deploy to MonsterASP via SFTP
 
 on:
   push:
     branches:
-      - main # Triggers when you push to main
+      - main 
 
 jobs:
-  build-and-deploy:
+  deploy:
+    name: Deploy
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🚚 Get latest code
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: ⚙️ Setup .NET 8
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x' # Change to 9.0.x if needed
-
-      - name: 🛠️ Restore dependencies
-        run: dotnet restore
-
-      - name: 🏗️ Build and Publish
-        run: dotnet publish -c Release -property:PublishDir=./publish_output
-
-      - name: 📂 Sync compiled files via SFTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Sync files
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.3
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          port: 21
-          local-dir: ./publish_output/ # Uploads ONLY the compiled code
-          server-dir: /wwwroot/
+          port: 22 # Added to use secure SFTP like your panel shows
+          server-dir: /wwwroot/ # Changed to match MonsterASP
           exclude: |
             **/.git*
             **/.git*/**
-            **/appsettings.Development.json
+            .github/**
