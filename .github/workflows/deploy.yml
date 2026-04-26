@@ -1,0 +1,39 @@
+name: Build and Deploy ASP.NET App
+
+on:
+  push:
+    branches:
+      - main # Triggers when you push to main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x' # Change to 9.0.x if needed
+
+      - name: 🛠️ Restore dependencies
+        run: dotnet restore
+
+      - name: 🏗️ Build and Publish
+        run: dotnet publish -c Release -property:PublishDir=./publish_output
+
+      - name: 📂 Sync compiled files via SFTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: 22
+          local-dir: ./publish_output/ # Uploads ONLY the compiled code
+          server-dir: /wwwroot/
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/appsettings.Development.json
