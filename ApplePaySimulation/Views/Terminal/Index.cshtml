@@ -1,0 +1,468 @@
+﻿@* Views/Terminal/Index.cshtml *@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>XenoPay · Simple Terminal</title>
+    <style>
+        :root {
+          --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+          --color-background-primary: #0C0F15; --color-background-secondary: #151B24; --color-background-tertiary: #1E2733;
+          --color-text-primary: #F1F5F9; --color-text-secondary: #A7B6CD; --color-text-tertiary: #6E7F96;
+          --color-border-primary: #5A6E8C; --color-border-secondary: #3F4E64; --color-border-tertiary: #2A3647;
+          --color-background-info: #1C3F6B; --color-border-info: #2E7BCF; --color-text-info: #7AB3F0;
+          --color-background-success: #155F48; --color-border-success: #2CAA78; --color-text-success: #46E5A6;
+          --color-background-warning: #794F1F; --color-border-warning: #E2A13A; --color-text-warning: #FFBF5E;
+          --color-text-danger: #FF8A8A;
+          --border-radius-md: 14px; --border-radius-xl: 24px;
+        }
+        * { box-sizing:border-box; margin:0; padding:0; }
+        .wrap { max-width:360px; margin:2rem auto; font-family:var(--font-sans); }
+        .screen { background:var(--color-background-primary); border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-xl); overflow:hidden; position:relative; }
+        .topbar { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:0.5px solid var(--color-border-tertiary); }
+        .topbar-left { display:flex; align-items:center; gap:8px; }
+        .brand { font-size:14px; font-weight:500; color:var(--color-text-primary); }
+        .icon-btn { background:none; border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-md); padding:5px 8px; cursor:pointer; color:var(--color-text-secondary); display:flex; align-items:center; gap:5px; transition:all .15s; font-family:var(--font-sans); font-size:13px; }
+        .icon-btn:hover { background:var(--color-background-secondary); color:var(--color-text-primary); border-color:var(--color-border-secondary); }
+        .icon-btn svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
+        .topbar-right { display:flex; align-items:center; gap:8px; }
+        .dot { width:8px; height:8px; border-radius:50%; background:var(--color-background-success); border:0.5px solid var(--color-border-success); }
+        .prog-bar { display:flex; gap:6px; padding:12px 20px; border-bottom:0.5px solid var(--color-border-tertiary); }
+        .prog-seg { height:3px; flex:1; border-radius:2px; background:var(--color-border-tertiary); transition:background .3s; }
+        .prog-seg.done { background:var(--color-text-primary); }
+        .step { padding:24px 20px; display:none; }
+        .step.on { display:block; }
+        .step-label { font-size:11px; color:var(--color-text-tertiary); letter-spacing:0.08em; margin-bottom:20px; }
+        .cur-row { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+        .cur-btn { flex:1; min-width:56px; padding:8px 4px; border-radius:var(--border-radius-md); border:0.5px solid var(--color-border-tertiary); background:var(--color-background-secondary); font-size:13px; font-weight:500; color:var(--color-text-secondary); cursor:pointer; text-align:center; transition:all .15s; }
+        .cur-btn:hover { border-color:var(--color-border-secondary); color:var(--color-text-primary); }
+        .cur-btn.sel { background:var(--color-background-info); border-color:var(--color-border-info); color:var(--color-text-info); }
+        .amount-box { text-align:center; padding:20px 0 16px; }
+        .amount-main { font-size:40px; font-weight:500; color:var(--color-text-primary); letter-spacing:-1px; line-height:1; }
+        .amount-cur { font-size:13px; color:var(--color-text-tertiary); margin-top:6px; }
+        .pad { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:20px; }
+        .pad-btn { padding:16px; border-radius:var(--border-radius-md); border:0.5px solid var(--color-border-tertiary); background:var(--color-background-secondary); font-size:18px; font-weight:400; color:var(--color-text-primary); cursor:pointer; text-align:center; transition:all .12s; }
+        .pad-btn:hover { background:var(--color-background-primary); border-color:var(--color-border-secondary); }
+        .pad-btn:active { transform:scale(0.96); }
+        .pad-btn.del { color:var(--color-text-secondary); font-size:16px; }
+        .pad-btn.zero { grid-column:span 2; }
+        .conv-preview { background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:14px 16px; margin-bottom:16px; border:0.5px solid var(--color-border-tertiary); }
+        .conv-row { display:flex; justify-content:space-between; align-items:center; font-size:13px; }
+        .conv-row + .conv-row { margin-top:8px; }
+        .conv-label { color:var(--color-text-secondary); }
+        .conv-val { font-weight:500; color:var(--color-text-primary); }
+        .conv-val.green { color:var(--color-text-success); }
+        .divider { height:0.5px; background:var(--color-border-tertiary); margin:10px 0; }
+        .auth-section { margin-bottom:16px; }
+        .field-label { font-size:12px; color:var(--color-text-secondary); margin-bottom:6px; }
+        .field-input { width:100%; padding:10px 12px; border-radius:var(--border-radius-md); border:0.5px solid var(--color-border-secondary); background:var(--color-background-secondary); font-size:14px; color:var(--color-text-primary); font-family:var(--font-sans); outline:none; transition:border-color .15s; }
+        .field-input:focus { border-color:var(--color-border-primary); }
+        .field-input::placeholder { color:var(--color-text-tertiary); }
+        .auth-err { font-size:11px; color:var(--color-text-danger); margin-top:5px; display:none; }
+        .auth-err.show { display:block; }
+        .btn-main { width:100%; padding:14px; border-radius:var(--border-radius-md); border:none; background:var(--color-text-primary); color:var(--color-background-primary); font-size:15px; font-weight:500; cursor:pointer; transition:opacity .15s; font-family:var(--font-sans); }
+        .btn-main:hover { opacity:.85; }
+        .btn-main:disabled { opacity:.3; cursor:not-allowed; }
+        .btn-ghost { width:100%; padding:12px; border-radius:var(--border-radius-md); border:0.5px solid var(--color-border-tertiary); background:transparent; font-size:14px; color:var(--color-text-secondary); cursor:pointer; margin-top:8px; font-family:var(--font-sans); transition:all .15s; }
+        .btn-ghost:hover { background:var(--color-background-secondary); color:var(--color-text-primary); }
+        .processing-wrap { text-align:center; padding:32px 20px; }
+        .spinner { width:40px; height:40px; border-radius:50%; border:2px solid var(--color-border-tertiary); border-top-color:var(--color-text-primary); animation:spin .8s linear infinite; margin:0 auto 20px; }
+        @@keyframes spin { to { transform:rotate(360deg); } }
+        .proc-steps { margin-top:20px; text-align:left; display:flex; flex-direction:column; gap:10px; }
+        .proc-step { display:flex; align-items:center; gap:10px; font-size:13px; color:var(--color-text-tertiary); }
+        .proc-step.done { color:var(--color-text-success); }
+        .proc-step.now { color:var(--color-text-primary); }
+        .psdot { width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; }
+        .proc-step.now .psdot { animation:blink .7s infinite; }
+        @@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+        .success-wrap { text-align:center; padding:28px 20px; }
+        .check-circle { width:56px; height:56px; border-radius:50%; background:var(--color-background-success); border:0.5px solid var(--color-border-success); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; }
+        .check-mark { width:22px; height:22px; stroke:var(--color-text-success); stroke-width:2.5; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+        .success-amount { font-size:32px; font-weight:500; color:var(--color-text-primary); letter-spacing:-1px; margin-bottom:4px; }
+        .success-label { font-size:13px; color:var(--color-text-secondary); margin-bottom:20px; }
+        .receipt { background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:14px 16px; border:0.5px solid var(--color-border-tertiary); margin-bottom:20px; text-align:left; }
+        .receipt-row { display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:4px 0; }
+        .receipt-row .rl { color:var(--color-text-secondary); }
+        .receipt-row .rv { font-weight:500; }
+        .receipt-row.total { border-top:0.5px solid var(--color-border-tertiary); margin-top:8px; padding-top:12px; }
+        .receipt-row.total .rv { color:var(--color-text-success); font-size:15px; }
+        .modal-backdrop { display:none; position:absolute; inset:0; background:rgba(0,0,0,0.45); border-radius:var(--border-radius-xl); align-items:flex-end; z-index:10; }
+        .modal-backdrop.open { display:flex; }
+        .modal { background:var(--color-background-secondary); border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-xl) var(--border-radius-xl) 0 0; width:100%; padding:20px; animation:slideUp .22s ease; }
+        @@keyframes slideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+        .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+        .modal-title { font-size:14px; font-weight:500; color:var(--color-text-primary); }
+        .modal-close { background:none; border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-md); width:28px; height:28px; cursor:pointer; font-size:14px; color:var(--color-text-secondary); display:flex; align-items:center; justify-content:center; transition:all .15s; }
+        .modal-close:hover { background:var(--color-background-primary); }
+        .hist-item { display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:0.5px solid var(--color-border-tertiary); font-size:13px; }
+        .hist-item:last-child { border-bottom:none; }
+        .hi-ref { font-size:11px; color:var(--color-text-tertiary); margin-top:2px; }
+        .hi-right { text-align:right; }
+        .hi-sar { font-weight:500; color:var(--color-text-primary); }
+        .hi-from { font-size:11px; color:var(--color-text-tertiary); margin-top:2px; }
+        .modal-empty { font-size:13px; color:var(--color-text-tertiary); text-align:center; padding:20px 0; }
+        .tap-area { text-align:center; padding:30px 20px; cursor:pointer; border-radius:24px; background:var(--color-background-secondary); border:2px dashed var(--color-border-secondary); margin-bottom:18px; transition:all 0.2s; }
+        .tap-area:hover { border-color:#2E7BCF; background:#19222E; }
+        .wifi-icon { color:#7AB3F0; margin-bottom:12px; animation:pulseIcon 1.5s infinite ease-in-out; }
+        .tap-text { font-size:14px; font-weight:600; color:var(--color-text-secondary); }
+        @@keyframes pulseIcon { 0%{transform:scale(0.95);opacity:0.7} 50%{transform:scale(1.05);opacity:1} 100%{transform:scale(0.95);opacity:0.7} }
+        .lock-screen { position:absolute; inset:0; background:rgba(12,15,21,0.95); backdrop-filter:blur(15px); z-index:200; display:flex; flex-direction:column; align-items:center; justify-content:center; transition:transform 0.5s cubic-bezier(0.4,0,0.2,1),opacity 0.5s ease; }
+        .lock-screen:not(.active) { transform:translateY(-100%); opacity:0; pointer-events:none; }
+        .lock-logo { font-size:26px; font-weight:800; color:white; margin-bottom:8px; letter-spacing:-0.5px; }
+        .lock-subtitle { color:var(--color-text-secondary); font-size:13px; margin-bottom:40px; }
+        .pin-display { display:flex; gap:16px; margin-bottom:40px; }
+        .pin-dot { width:14px; height:14px; border-radius:50%; border:2px solid var(--color-border-secondary); transition:0.2s; }
+        .pin-dot.filled { background:white; border-color:white; }
+        .pin-dot.error { background:var(--color-text-danger); border-color:var(--color-text-danger); }
+        .numpad-lock { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+        .num-btn-lock { width:68px; height:68px; border-radius:50%; background:var(--color-background-secondary); border:1px solid var(--color-border-tertiary); display:flex; align-items:center; justify-content:center; font-size:24px; color:var(--color-text-primary); font-weight:600; cursor:pointer; transition:0.1s; }
+        .num-btn-lock:active { background:var(--color-background-tertiary); transform:scale(0.92); }
+        .num-btn-lock.invisible { visibility:hidden; }
+        @@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-10px)} 75%{transform:translateX(10px)} }
+        .shake-animation { animation:shake 0.4s ease-in-out; }
+        #apiError { display:none; font-size:12px; color:var(--color-text-danger); margin-top:8px; text-align:center; }
+        #apiError.show { display:block; }
+    </style>
+</head>
+<body>
+
+    <div class="lock-screen active" id="lockScreen">
+        <div class="lock-logo">XenoPay</div>
+        <div class="lock-subtitle">Terminal · Operator Login</div>
+        <div class="pin-display" id="pinDisplay">
+            <div class="pin-dot"></div><div class="pin-dot"></div>
+            <div class="pin-dot"></div><div class="pin-dot"></div>
+        </div>
+        <div class="numpad-lock">
+            <div class="num-btn-lock" onclick="enterPin('1')">1</div>
+            <div class="num-btn-lock" onclick="enterPin('2')">2</div>
+            <div class="num-btn-lock" onclick="enterPin('3')">3</div>
+            <div class="num-btn-lock" onclick="enterPin('4')">4</div>
+            <div class="num-btn-lock" onclick="enterPin('5')">5</div>
+            <div class="num-btn-lock" onclick="enterPin('6')">6</div>
+            <div class="num-btn-lock" onclick="enterPin('7')">7</div>
+            <div class="num-btn-lock" onclick="enterPin('8')">8</div>
+            <div class="num-btn-lock" onclick="enterPin('9')">9</div>
+            <div class="num-btn-lock invisible"></div>
+            <div class="num-btn-lock" onclick="enterPin('0')">0</div>
+            <div class="num-btn-lock" style="background:transparent;border:none;color:#FF8A8A" onclick="deletePin()">⌫</div>
+        </div>
+    </div>
+
+    <div class="wrap">
+        <div class="screen">
+
+            <div class="topbar">
+                <div class="topbar-left">
+                    <span class="brand">XenoPay</span>
+                    <button class="icon-btn" onclick="openWallet()">
+                        <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>
+                        Wallet
+                    </button>
+                </div>
+                <div class="topbar-right">
+                    <div style="font-size:11px;color:#A7B6CD;">Central Store #102</div>
+                    <button class="icon-btn" onclick="openHist()">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><polyline points="12 7 12 12 15 15" /></svg>
+                        History
+                    </button>
+                    <div class="dot"></div>
+                </div>
+            </div>
+
+            <div class="prog-bar">
+                <div class="prog-seg done" id="ps0"></div>
+                <div class="prog-seg" id="ps1"></div>
+                <div class="prog-seg" id="ps2"></div>
+            </div>
+
+            <!-- STEP 0: Enter Amount -->
+            <div class="step on" id="step0">
+                <div class="cur-row">
+                    <div class="cur-btn sel" data-cur="USD" data-rate="3.75" onclick="selCur(this)">USD</div>
+                    <div class="cur-btn" data-cur="EUR" data-rate="4.08" onclick="selCur(this)">EUR</div>
+                    <div class="cur-btn" data-cur="GBP" data-rate="4.79" onclick="selCur(this)">GBP</div>
+                    <div class="cur-btn" data-cur="EGP" data-rate="0.076" onclick="selCur(this)">EGP</div>
+                    <div class="cur-btn" data-cur="AED" data-rate="1.02" onclick="selCur(this)">AED</div>
+                </div>
+                <div class="amount-box">
+                    <div class="amount-main" id="amtDisplay">0.00</div>
+                    <div class="amount-cur" id="amtCur">USD</div>
+                </div>
+                <div class="pad">
+                    <div class="pad-btn" onclick="key('1')">1</div>
+                    <div class="pad-btn" onclick="key('2')">2</div>
+                    <div class="pad-btn" onclick="key('3')">3</div>
+                    <div class="pad-btn" onclick="key('4')">4</div>
+                    <div class="pad-btn" onclick="key('5')">5</div>
+                    <div class="pad-btn" onclick="key('6')">6</div>
+                    <div class="pad-btn" onclick="key('7')">7</div>
+                    <div class="pad-btn" onclick="key('8')">8</div>
+                    <div class="pad-btn" onclick="key('9')">9</div>
+                    <div class="pad-btn" onclick="key('.')">.</div>
+                    <div class="pad-btn zero" onclick="key('0')">0</div>
+                    <div class="pad-btn del" onclick="key('del')">&#9003;</div>
+                </div>
+                <button class="btn-main" id="toStep1Btn" disabled onclick="goStep(1)">Review conversion</button>
+            </div>
+
+            <!-- STEP 1: Review + Buyer Auth -->
+            <div class="step" id="step1">
+                <div class="conv-preview">
+                    <div class="conv-row"><span class="conv-label">Customer pays</span><span class="conv-val" id="cvFrom">—</span></div>
+                    <div class="conv-row"><span class="conv-label">Exchange rate</span><span class="conv-val" id="cvRate">—</span></div>
+                    <div class="conv-row"><span class="conv-label">Fee (0.5%)</span><span class="conv-val" id="cvFee">—</span></div>
+                    <div class="divider"></div>
+                    <div class="conv-row"><span class="conv-label" style="font-weight:500;color:var(--color-text-primary)">Merchant receives</span><span class="conv-val green" id="cvNet">—</span></div>
+                </div>
+
+                <div id="tapArea" class="tap-area" onclick="showAuthSection()">
+                    <div class="wifi-icon">
+                        <svg viewBox="0 0 24 24" width="42" height="42" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+                            <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+                            <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+                            <circle cx="12" cy="20" r="1" />
+                        </svg>
+                    </div>
+                    <div class="tap-text">Tap phone or card to authenticate</div>
+                </div>
+
+                <div class="auth-section" id="authSection" style="display:none;">
+                    <div class="field-label">Buyer Wallet ID</div>
+                    <input class="field-input" id="buyerIdInput" type="text" placeholder="e.g. user-id from database" oninput="clearErr()" />
+                    <div class="auth-err" id="authErr">Please enter a valid Wallet ID to proceed.</div>
+                    <div id="apiError" class="auth-err">Payment failed. Please check Buyer ID and try again.</div>
+                    <button style="margin-top:20px;" class="btn-main" id="payBtn" onclick="attemptPay()">Authorize &amp; Pay</button>
+                    <button class="btn-ghost" onclick="goStep(0)">Back</button>
+                </div>
+            </div>
+
+            <!-- STEP 2: Processing -->
+            <div class="step" id="step2">
+                <div class="processing-wrap">
+                    <div class="spinner"></div>
+                    <div style="font-size:15px;font-weight:500;color:var(--color-text-primary)">Processing payment</div>
+                    <div class="proc-steps">
+                        <div class="proc-step now" id="psi0"><div class="psdot"></div>Detecting currency</div>
+                        <div class="proc-step" id="psi1"><div class="psdot"></div>Fetching exchange rate</div>
+                        <div class="proc-step" id="psi2"><div class="psdot"></div>Converting to SAR</div>
+                        <div class="proc-step" id="psi3"><div class="psdot"></div>Crediting merchant</div>
+                    </div>
+                    <div class="proc-merchant">Merchant: <span style="font-weight:500;color:var(--color-text-primary)">Central Store #102</span></div>
+                </div>
+            </div>
+
+            <!-- STEP 3: Success -->
+            <div class="step" id="step3">
+                <div class="success-wrap">
+                    <div class="check-circle">
+                        <svg class="check-mark" viewBox="0 0 24 24"><polyline points="4 12 9 17 20 7" /></svg>
+                    </div>
+                    <div class="success-amount" id="sucAmt">—</div>
+                    <div class="success-label">credited to Central Store #102</div>
+                    <div class="receipt">
+                        <div class="receipt-row"><span class="rl">Customer paid</span><span class="rv" id="sucFrom" style="color:var(--color-text-tertiary)">—</span></div>
+                        <div class="receipt-row"><span class="rl">Rate</span><span class="rv" id="sucRate" style="color:var(--color-text-tertiary)">—</span></div>
+                        <div class="receipt-row"><span class="rl">Buyer ID</span><span class="rv" id="sucBuyer" style="font-size:12px;color:var(--color-text-tertiary)">—</span></div>
+                        <div class="receipt-row"><span class="rl">Ref</span><span class="rv" id="sucRef" style="font-size:11px;color:var(--color-text-tertiary)">—</span></div>
+                        <div class="receipt-row total"><span class="rl" style="font-weight:500;color:var(--color-text-primary)">Total SAR</span><span class="rv" id="sucNet">—</span></div>
+                    </div>
+                    <button class="btn-main" onclick="reset()">New payment</button>
+                </div>
+            </div>
+
+            <!-- History Modal -->
+            <div class="modal-backdrop" id="histBackdrop" onclick="closeOnBg(event,'histBackdrop')">
+                <div class="modal">
+                    <div class="modal-header">
+                        <span class="modal-title">Transaction history</span>
+                        <button class="modal-close" onclick="closeModal('histBackdrop')">&#x2715;</button>
+                    </div>
+                    <div id="histList"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let amtStr = '', cur = 'USD', rate = 3.75;
+        let txs = [];  // populated from server responses
+
+        function selCur(el) {
+            document.querySelectorAll('.cur-btn').forEach(b => b.classList.remove('sel'));
+            el.classList.add('sel');
+            cur = el.dataset.cur; rate = parseFloat(el.dataset.rate);
+            document.getElementById('amtCur').textContent = cur;
+        }
+
+        function key(k) {
+            if (k === 'del') { amtStr = amtStr.slice(0, -1); }
+            else if (k === '.') { if (!amtStr.includes('.')) amtStr += (amtStr ? '' : '0') + '.'; }
+            else { if (amtStr.length >= 8) return; amtStr = amtStr === '0' ? k : amtStr + k; }
+            document.getElementById('amtDisplay').textContent = amtStr || '0.00';
+            document.getElementById('toStep1Btn').disabled = !(parseFloat(amtStr) > 0);
+        }
+
+        function goStep(n) {
+            document.querySelectorAll('.step').forEach((s, i) => s.classList.toggle('on', i === n));
+            [0, 1, 2].forEach(i => document.getElementById('ps' + i).classList.toggle('done', i <= (n === 3 ? 2 : n)));
+            if (n === 1) {
+                const a = parseFloat(amtStr) || 0, g = a * rate, f = g * 0.005, net = g - f;
+                document.getElementById('cvFrom').textContent = a.toFixed(2) + ' ' + cur;
+                document.getElementById('cvRate').textContent = '1 ' + cur + ' = ' + rate.toFixed(2) + ' SAR';
+                document.getElementById('cvFee').textContent = f.toFixed(2) + ' SAR';
+                document.getElementById('cvNet').textContent = net.toFixed(2) + ' SAR';
+                document.getElementById('buyerIdInput').value = '';
+                document.getElementById('authErr').classList.remove('show');
+                document.getElementById('apiError').classList.remove('show');
+            }
+        }
+
+        function clearErr() {
+            document.getElementById('authErr').classList.remove('show');
+            document.getElementById('apiError').classList.remove('show');
+        }
+
+        function showAuthSection() {
+            document.getElementById('tapArea').style.display = 'none';
+            document.getElementById('authSection').style.display = 'block';
+            document.getElementById('buyerIdInput').focus();
+        }
+
+        function attemptPay() {
+            const id = document.getElementById('buyerIdInput').value.trim();
+            if (!id) { document.getElementById('authErr').classList.add('show'); document.getElementById('buyerIdInput').focus(); return; }
+
+            const a = parseFloat(amtStr) || 0;
+            const sarAmount = a * rate;
+
+            document.getElementById('payBtn').disabled = true;
+            goStep(2);
+            ['psi0','psi1','psi2','psi3'].forEach(pid => document.getElementById(pid).className = 'proc-step');
+            document.getElementById('psi0').classList.add('now');
+
+            let i = 0;
+            const iv = setInterval(() => {
+                document.getElementById('psi' + i).className = 'proc-step done'; i++;
+                if (i < 4) document.getElementById('psi' + i).classList.add('now');
+                else {
+                    clearInterval(iv);
+                    // ── REAL API CALL TO TerminalController.ProcessPayment ──
+                    fetch('@Url.Action("ProcessPayment", "Terminal")', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            amountSAR: sarAmount,
+                            buyerWalletId: id,
+                            currencyOriginal: cur,
+                            amountOriginal: a
+                        })
+                    })
+                    .then(res => {
+                        if (!res.ok) throw new Error('Payment failed');
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            finish(id, sarAmount, data.reference);
+                        } else {
+                            handlePaymentError();
+                        }
+                    })
+                    .catch(() => handlePaymentError());
+                }
+            }, 650);
+        }
+
+        function handlePaymentError() {
+            goStep(1);
+            showAuthSection();
+            document.getElementById('apiError').classList.add('show');
+            document.getElementById('payBtn').disabled = false;
+        }
+
+        function finish(buyerId, sarAmount, reference) {
+            const a = parseFloat(amtStr) || 0;
+            const net = sarAmount.toFixed(2);
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('sucAmt').textContent = parseFloat(net).toLocaleString('en', { minimumFractionDigits: 2 }) + ' SAR';
+            document.getElementById('sucFrom').textContent = a.toFixed(2) + ' ' + cur;
+            document.getElementById('sucRate').textContent = '1 ' + cur + ' = ' + rate.toFixed(2) + ' SAR';
+            document.getElementById('sucBuyer').textContent = buyerId;
+            document.getElementById('sucRef').textContent = reference;
+            document.getElementById('sucNet').textContent = parseFloat(net).toLocaleString('en', { minimumFractionDigits: 2 }) + ' SAR';
+            txs.unshift({ from: a.toFixed(2) + ' ' + cur, net, ref: reference, time, buyer: buyerId });
+            document.getElementById('payBtn').disabled = false;
+            goStep(3);
+        }
+
+        function reset() {
+            amtStr = ''; cur = 'USD'; rate = 3.75;
+            document.getElementById('amtDisplay').textContent = '0.00';
+            document.getElementById('toStep1Btn').disabled = true;
+            document.querySelectorAll('.cur-btn').forEach(b => b.classList.remove('sel'));
+            document.querySelector('[data-cur="USD"]').classList.add('sel');
+            document.getElementById('amtCur').textContent = 'USD';
+            document.getElementById('tapArea').style.display = '';
+            document.getElementById('authSection').style.display = 'none';
+            goStep(0);
+        }
+
+        function openHist() {
+            const el = document.getElementById('histList');
+            el.innerHTML = txs.length ? txs.map(t => `
+                <div class="hist-item">
+                    <div><div style="font-size:13px;color:var(--color-text-primary)">${t.time} <span style="font-size:11px;color:var(--color-text-tertiary)">${t.buyer}</span></div><div class="hi-ref">${t.ref}</div></div>
+                    <div class="hi-right"><div class="hi-sar">${parseFloat(t.net).toLocaleString('en',{minimumFractionDigits:2})} SAR</div><div class="hi-from">${t.from}</div></div>
+                </div>`).join('') : '<div class="modal-empty">No transactions yet</div>';
+            document.getElementById('histBackdrop').classList.add('open');
+        }
+
+        function openWallet() {
+            window.open('@Url.Action("Index", "Wallet")', '_blank');
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+        function closeOnBg(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
+
+        // Lock screen PIN logic
+        let currentPin = "";
+        const CORRECT_PIN = "1234";
+        const dots = document.querySelectorAll('.pin-dot');
+        const pinDisplay = document.getElementById('pinDisplay');
+        const lockScreen = document.getElementById('lockScreen');
+
+        function updateDots() {
+            dots.forEach((dot, index) => {
+                if (index < currentPin.length) { dot.classList.add('filled'); dot.classList.remove('error'); }
+                else { dot.classList.remove('filled', 'error'); }
+            });
+        }
+
+        function enterPin(num) {
+            if (currentPin.length < 4) { currentPin += num; updateDots(); }
+            if (currentPin.length === 4) {
+                if (currentPin === CORRECT_PIN) {
+                    setTimeout(() => { lockScreen.classList.remove('active'); }, 200);
+                } else {
+                    setTimeout(() => {
+                        pinDisplay.classList.add('shake-animation');
+                        dots.forEach(dot => dot.classList.add('error'));
+                        setTimeout(() => { pinDisplay.classList.remove('shake-animation'); currentPin = ""; updateDots(); }, 400);
+                    }, 100);
+                }
+            }
+        }
+
+        function deletePin() {
+            if (currentPin.length > 0) { currentPin = currentPin.slice(0, -1); updateDots(); }
+        }
+    </script>
+</body>
+</html>

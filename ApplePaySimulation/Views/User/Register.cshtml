@@ -1,0 +1,229 @@
+﻿@model ApplePaySimulation.Models.ViewModels.Authentication.RegisterViewModel
+
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>XenoPay · Create Account</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #05070A; --bg-surface: #10141D; --bg-card: #1A212D;
+            --text-main: #F1F5F9; --text-muted: #8B9BB4; --text-faint: #4A5568;
+            --accent-blue: #2E7BCF; --accent-blue-dim: #1C3F6B; --accent-green: #46E5A6;
+            --border-color: #2A3647; --border-dim: #1A2535; --danger: #FF6B6B;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'DM Sans', system-ui, sans-serif; background: #000;
+            display: flex; align-items: center; justify-content: center; min-height: 100vh;
+        }
+        .mobile-device {
+            width: 100%; max-width: 390px; height: 100vh; max-height: 844px;
+            background: var(--bg-base); position: relative; overflow: hidden;
+            display: flex; flex-direction: column; border: 1px solid #1A212D;
+        }
+        @@media (min-width: 400px) {
+            .mobile-device { height: 844px; border-radius: 40px; box-shadow: 0 0 50px rgba(0,0,0,0.8), inset 0 0 0 6px #000; }
+        }
+        .bg-glow { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
+        .glow-blue { width: 260px; height: 260px; background: rgba(46,123,207,0.12); top: -60px; left: -60px; }
+        .glow-teal { width: 200px; height: 200px; background: rgba(70,229,166,0.07); bottom: 100px; right: -60px; }
+        .status-bar { display: flex; justify-content: space-between; align-items: center; padding: 14px 24px 0; z-index: 10; position: relative; }
+        .status-time { font-size: 15px; font-weight: 600; color: var(--text-main); }
+        .status-icons { display: flex; gap: 6px; align-items: center; }
+        .status-icons svg { width: 16px; height: 16px; fill: var(--text-main); }
+        .auth-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 0 28px 40px; position: relative; z-index: 1; }
+        .auth-heading { font-size: 24px; font-weight: 700; color: var(--text-main); letter-spacing: -0.4px; margin-bottom: 6px; }
+        .auth-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 32px; line-height: 1.5; }
+        .field { margin-bottom: 14px; }
+        .field label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 7px; }
+        .field-wrap { position: relative; }
+        .field-wrap input {
+            width: 100%; background: var(--bg-surface); border: 1px solid var(--border-color);
+            color: var(--text-main); padding: 15px 46px 15px 16px; border-radius: 14px;
+            font-size: 15px; font-family: 'DM Sans', system-ui, sans-serif; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .field-wrap input::placeholder { color: var(--text-faint); }
+        .field-wrap input:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(46,123,207,0.12); }
+        .field-wrap input.input-validation-error { border-color: var(--danger); }
+        .field-icon { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--text-faint); display: flex; align-items: center; }
+        .field-icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+        .field-validation-error { font-size: 12px; color: var(--danger); margin-top: 5px; display: block; }
+        .validation-summary-errors ul { list-style: none; padding: 0; }
+        .validation-summary-errors li { font-size: 13px; color: var(--danger); margin-bottom: 4px; text-align: center; }
+        .btn-auth {
+            width: 100%; padding: 16px; border-radius: 14px; border: none;
+            background: var(--accent-blue); color: #fff; font-weight: 700;
+            font-size: 16px; cursor: pointer; font-family: 'DM Sans', system-ui, sans-serif;
+            transition: opacity 0.2s, transform 0.15s; position: relative; overflow: hidden; margin-top: 16px;
+        }
+        .btn-auth::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent); }
+        .btn-auth:hover { opacity: 0.88; }
+        .btn-auth:active { transform: scale(0.98); }
+        .terms-row { display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; margin-bottom: 4px; }
+        .terms-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent-blue); border-radius: 4px; cursor: pointer; flex-shrink: 0; margin-top: 1px; }
+        .terms-row span { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+        .pwd-strength { margin-top: 8px; }
+        .pwd-strength-bars { display: flex; gap: 4px; margin-bottom: 4px; }
+        .pwd-bar { flex: 1; height: 3px; border-radius: 2px; background: var(--border-dim); transition: background 0.3s; }
+        .pwd-bar.weak { background: #FF6B6B; }
+        .pwd-bar.medium { background: #FFBF5E; }
+        .pwd-bar.strong { background: var(--accent-green); }
+        .pwd-strength-label { font-size: 11px; color: var(--text-faint); }
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 6px; background: none; border: none;
+            cursor: pointer; color: var(--text-muted); font-size: 14px; font-weight: 500;
+            font-family: 'DM Sans', system-ui, sans-serif; padding: 0; transition: color 0.15s; margin-bottom: 24px; text-decoration: none;
+        }
+        .back-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.2; }
+        .back-btn:hover { color: var(--text-main); }
+        .auth-footer { text-align: center; margin-top: 24px; }
+        .auth-footer p { font-size: 14px; color: var(--text-muted); }
+        .auth-footer a { color: var(--accent-blue); font-weight: 600; text-decoration: none; }
+        .auth-content::-webkit-scrollbar { width: 0; }
+    </style>
+</head>
+<body>
+    <div class="mobile-device">
+        <div class="bg-glow glow-blue"></div>
+        <div class="bg-glow glow-teal"></div>
+
+        <div class="status-bar">
+            <span class="status-time" id="clock">9:41</span>
+            <div class="status-icons">
+                <svg viewBox="0 0 24 24"><rect x="2" y="14" width="3" height="7" rx="1" /><rect x="7" y="10" width="3" height="11" rx="1" /><rect x="12" y="6" width="3" height="15" rx="1" /><rect x="17" y="2" width="3" height="19" rx="1" /></svg>
+                <svg viewBox="0 0 24 24"><rect x="1" y="7" width="18" height="10" rx="2" stroke="white" stroke-width="1.5" fill="none" /><path d="M23 11v2" stroke="white" stroke-width="2" stroke-linecap="round" /><rect x="3" y="9" width="12" height="6" rx="1" fill="white" /></svg>
+            </div>
+        </div>
+
+        <div class="auth-content">
+            <a class="back-btn" href="@Url.Action("Login", "User")">
+                <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6" /></svg>
+                Back
+            </a>
+
+            <div style="padding: 0 0 28px;">
+                <div class="auth-heading">Create account</div>
+                <div class="auth-sub">Join XenoPay and start paying smarter</div>
+            </div>
+
+            @using (Html.BeginForm("SaveRegister", "User", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+                <div class="field">
+                    <label asp-for="FullName">Full Name</label>
+                    <div class="field-wrap">
+                        <input asp-for="FullName" type="text" placeholder="Abdallah Mohamed" autocomplete="name" />
+                        <div class="field-icon">
+                            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                        </div>
+                    </div>
+                    <span asp-validation-for="FullName" class="field-validation-error"></span>
+                </div>
+
+                <div class="field">
+                    <label asp-for="Email">Email Address</label>
+                    <div class="field-wrap">
+                        <input asp-for="Email" type="email" placeholder="you@example.com" autocomplete="email" />
+                        <div class="field-icon">
+                            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>
+                        </div>
+                    </div>
+                    <span asp-validation-for="Email" class="field-validation-error"></span>
+                </div>
+
+                <div class="field">
+                    <label asp-for="Password">Password</label>
+                    <div class="field-wrap">
+                        <input asp-for="Password" type="password" id="su-password" placeholder="Min. 8 characters"
+                               autocomplete="new-password" oninput="checkStrength(this)" />
+                        <div class="field-icon" onclick="togglePwd('su-password', this)" style="cursor:pointer;">
+                            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                        </div>
+                    </div>
+                    <div class="pwd-strength">
+                        <div class="pwd-strength-bars">
+                            <div class="pwd-bar" id="sb1"></div>
+                            <div class="pwd-bar" id="sb2"></div>
+                            <div class="pwd-bar" id="sb3"></div>
+                            <div class="pwd-bar" id="sb4"></div>
+                        </div>
+                        <div class="pwd-strength-label" id="pwd-label">Enter a password</div>
+                    </div>
+                    <span asp-validation-for="Password" class="field-validation-error"></span>
+                </div>
+
+                <div class="field">
+                    <label asp-for="ConfirmPassword">Confirm Password</label>
+                    <div class="field-wrap">
+                        <input asp-for="ConfirmPassword" type="password" id="su-confirm" placeholder="Repeat your password" autocomplete="new-password" />
+                        <div class="field-icon" onclick="togglePwd('su-confirm', this)" style="cursor:pointer;">
+                            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                        </div>
+                    </div>
+                    <span asp-validation-for="ConfirmPassword" class="field-validation-error"></span>
+                </div>
+
+                <button type="submit" class="btn-auth">Create Account</button>
+            }
+
+            <div class="auth-footer">
+                <p>Already have an account? <a href="@Url.Action("Login", "User")">Sign in</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateClock() {
+            const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('clock').textContent = t;
+        }
+        updateClock(); setInterval(updateClock, 10000);
+
+        function togglePwd(inputId, iconEl) {
+            const inp = document.getElementById(inputId);
+            const showing = inp.type === 'text';
+            inp.type = showing ? 'password' : 'text';
+            iconEl.innerHTML = showing
+                ? `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`
+                : `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+        }
+
+        function checkStrength(input) {
+            const v = input.value;
+            const bars = ['sb1','sb2','sb3','sb4'].map(id => document.getElementById(id));
+            const label = document.getElementById('pwd-label');
+            bars.forEach(b => b.className = 'pwd-bar');
+            let score = 0;
+            if (v.length >= 8) score++;
+            if (/[A-Z]/.test(v)) score++;
+            if (/[0-9]/.test(v)) score++;
+            if (/[^A-Za-z0-9]/.test(v)) score++;
+            if (v.length === 0) { label.textContent = 'Enter a password'; return; }
+            const configs = [
+                { cls: 'weak', label: 'Weak' }, { cls: 'weak', label: 'Weak' },
+                { cls: 'medium', label: 'Fair' }, { cls: 'medium', label: 'Good' },
+                { cls: 'strong', label: 'Strong' }
+            ];
+            const cfg = configs[score];
+            for (let i = 0; i < score; i++) bars[i].classList.add(cfg.cls);
+            label.textContent = cfg.label;
+            label.style.color = score >= 3 ? 'var(--accent-green)' : score >= 2 ? '#FFBF5E' : '#FF6B6B';
+        }
+    </script>
+    @section Scripts {
+        @{
+            await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        }
+    }
+</body>
+</html>

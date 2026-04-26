@@ -1,0 +1,13 @@
+﻿namespace ApplePaySimulation.Models.SettingsModels
+{
+    public class EmailSettings
+    {
+        public string SmtpHost { get; set; }
+        public int SmtpPort { get; set; }
+        public bool SmtpUseSSL { get; set; }
+        public string SmtpUser { get; set; }
+        public string SmtpPassword { get; set; }
+
+        public string FromName { get; set; }
+    }
+}
