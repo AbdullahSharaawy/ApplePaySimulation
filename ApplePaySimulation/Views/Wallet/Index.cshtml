@@ -19,75 +19,548 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-base:#05070A; --bg-surface:#10141D; --bg-card:#1A212D;
-            --text-main:#F1F5F9; --text-muted:#8B9BB4; --text-faint:#4A5568;
-            --accent-blue:#2E7BCF; --accent-blue-dim:#1C3F6B; --accent-green:#46E5A6;
-            --border-color:#2A3647; --border-dim:#1A2535; --danger:#FF6B6B;
+            --bg-base: #05070A;
+            --bg-surface: #10141D;
+            --bg-card: #1A212D;
+            --text-main: #F1F5F9;
+            --text-muted: #8B9BB4;
+            --text-faint: #4A5568;
+            --accent-blue: #2E7BCF;
+            --accent-blue-dim: #1C3F6B;
+            --accent-green: #46E5A6;
+            --border-color: #2A3647;
+            --border-dim: #1A2535;
+            --danger: #FF6B6B;
         }
-        * { box-sizing:border-box; margin:0; padding:0; }
-        body { font-family:'DM Sans',system-ui,sans-serif; background:#000; display:flex; align-items:center; justify-content:center; min-height:100vh; }
-        .mobile-device { width:100%; max-width:390px; height:100vh; max-height:844px; background:var(--bg-base); position:relative; overflow:hidden; display:flex; flex-direction:column; border:1px solid #1A212D; }
-        @@media (min-width:400px) { .mobile-device { height:844px; border-radius:40px; box-shadow:0 0 50px rgba(0,0,0,0.8),inset 0 0 0 6px #000; } }
-        .bg-glow { position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none; z-index:0; }
-        .glow-blue { width:260px; height:260px; background:rgba(46,123,207,0.12); top:-60px; left:-60px; }
-        .glow-teal { width:200px; height:200px; background:rgba(70,229,166,0.07); bottom:100px; right:-60px; }
-        .header { padding:50px 24px 20px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0; position:relative; z-index:5; }
-        .greeting { font-size:22px; font-weight:700; color:var(--text-main); }
-        .avatar { width:40px; height:40px; border-radius:50%; background:var(--bg-card); border:2px solid var(--border-color); display:flex; align-items:center; justify-content:center; color:var(--text-main); cursor:pointer; transition:border-color 0.2s; text-decoration:none; }
-        .avatar:hover { border-color:var(--accent-blue); }
-        .view-section { flex:1; display:none; flex-direction:column; overflow-y:auto; padding-bottom:90px; animation:fadeIn 0.2s ease; }
-        .view-section.active { display:flex; }
-        @@keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-        .balance-card { margin:0 24px 20px; text-align:center; padding:20px; background:var(--bg-surface); border-radius:24px; border:1px solid var(--border-color); }
-        .balance-label { font-size:12px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
-        .balance-amount { font-size:42px; font-weight:700; color:var(--text-main); letter-spacing:-1px; }
-        .card-container { padding:0 24px; perspective:1000px; margin-bottom:20px; }
-        .virtual-card { background:linear-gradient(135deg,#1C3F6B,#102440); border-radius:20px; padding:24px; height:190px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 20px 40px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.1); position:relative; overflow:hidden; border:1px solid rgba(255,255,255,0.05); }
-        .virtual-card::after { content:''; position:absolute; top:-50%; right:-20%; width:200px; height:200px; background:rgba(255,255,255,0.05); border-radius:50%; filter:blur(20px); }
-        .card-top { display:flex; justify-content:space-between; align-items:center; }
-        .chip { width:45px; height:32px; background:linear-gradient(135deg,#D4AF37,#AA841F); border-radius:6px; position:relative; }
-        .chip::after { content:''; position:absolute; inset:4px; border:1px solid rgba(0,0,0,0.2); border-radius:2px; }
-        .card-number { font-size:18px; letter-spacing:3px; color:#FFF; font-family:monospace; }
-        .card-bottom { display:flex; justify-content:space-between; color:rgba(255,255,255,0.8); font-size:11px; text-transform:uppercase; }
-        .pay-area { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; min-height:220px; }
-        .pulse-ring { position:absolute; width:140px; height:140px; border-radius:50%; background:rgba(46,123,207,0.1); animation:ripple 2s infinite cubic-bezier(0.2,0.8,0.2,1); z-index:1; }
-        .pulse-ring:nth-child(2) { animation-delay:0.6s; }
-        @@keyframes ripple { 0%{transform:scale(0.8);opacity:1} 100%{transform:scale(2.5);opacity:0} }
-        .nfc-btn { width:90px; height:90px; background:var(--bg-surface); border:2px solid var(--accent-blue); border-radius:50%; display:flex; align-items:center; justify-content:center; z-index:10; cursor:pointer; box-shadow:0 0 30px rgba(46,123,207,0.2); transition:all 0.3s cubic-bezier(0.4,0,0.2,1); }
-        .nfc-btn:active { transform:scale(0.95); }
-        .nfc-icon { color:var(--accent-blue); }
-        .success-icon { display:none; color:var(--accent-green); }
-        .nfc-btn.success { border-color:var(--accent-green); background:rgba(70,229,166,0.1); box-shadow:0 0 40px rgba(70,229,166,0.3); }
-        .status-text-pay { margin-top:30px; font-size:15px; font-weight:500; color:var(--text-muted); text-align:center; height:20px; z-index:10; }
-        .form-group { padding:0 24px; margin-bottom:24px; }
-        .section-title { font-size:13px; color:var(--text-muted); font-weight:600; margin-bottom:16px; text-transform:uppercase; letter-spacing:1px; }
-        .input-field { width:100%; background:var(--bg-surface); border:1px solid var(--border-color); color:var(--text-main); padding:16px; border-radius:16px; font-size:16px; margin-bottom:12px; outline:none; transition:0.2s; font-family:'DM Sans',system-ui,sans-serif; }
-        .input-field:focus { border-color:var(--accent-blue); }
-        .row { display:flex; gap:12px; }
-        .btn-primary { width:100%; padding:16px; border-radius:16px; border:none; background:var(--accent-blue); color:white; font-weight:700; font-size:16px; cursor:pointer; transition:0.2s; font-family:'DM Sans',system-ui,sans-serif; }
-        .btn-primary:active { transform:scale(0.98); }
-        .history-list { padding:0 24px; }
-        .history-item { display:flex; justify-content:space-between; align-items:center; padding:16px; background:var(--bg-surface); border-radius:16px; margin-bottom:12px; border:1px solid var(--border-color); }
-        .hi-icon { width:40px; height:40px; border-radius:12px; background:rgba(46,123,207,0.1); color:var(--accent-blue); display:flex; align-items:center; justify-content:center; }
-        .hi-details { flex:1; margin:0 12px; }
-        .hi-title { font-weight:600; color:var(--text-main); font-size:15px; }
-        .hi-time { font-size:12px; color:var(--text-muted); margin-top:4px; }
-        .hi-amount { font-weight:700; color:var(--text-main); text-align:right; }
-        .hi-sub { font-size:11px; color:var(--accent-green); margin-top:4px; }
-        .bottom-nav { position:absolute; bottom:0; width:100%; height:80px; background:rgba(16,20,29,0.92); backdrop-filter:blur(12px); border-top:1px solid var(--border-color); display:flex; justify-content:space-around; align-items:center; padding-bottom:15px; }
-        .nav-item { display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--text-muted); cursor:pointer; width:60px; }
-        .nav-item.active { color:var(--accent-blue); }
-        .nav-item svg { width:24px; height:24px; stroke:currentColor; fill:none; stroke-width:2; }
-        .nav-item span { font-size:11px; font-weight:500; }
-        .auth-overlay { position:absolute; inset:0; background:rgba(5,7,10,0.85); backdrop-filter:blur(10px); z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.3s; }
-        .auth-overlay.active { opacity:1; pointer-events:auto; }
-        .face-id-icon { width:60px; height:60px; border:2px solid var(--text-main); border-radius:12px; margin-bottom:20px; display:flex; align-items:center; justify-content:center; position:relative; }
-        .face-id-icon::before { content:''; position:absolute; top:15px; width:30px; height:2px; background:var(--text-main); box-shadow:0 20px 0 var(--text-main); }
-        .face-id-icon::after { content:''; position:absolute; left:15px; height:30px; width:2px; background:var(--text-main); box-shadow:20px 0 0 var(--text-main); }
-        .toast { position:absolute; bottom:100px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--bg-card); border:1px solid var(--border-color); padding:12px 20px; border-radius:12px; font-size:14px; color:var(--text-main); white-space:nowrap; z-index:200; opacity:0; pointer-events:none; transition:opacity 0.3s,transform 0.3s; }
-        .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-        .toast.success-toast { border-color:rgba(70,229,166,0.3); color:var(--accent-green); }
-        .view-section::-webkit-scrollbar { width:0; }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DM Sans',system-ui,sans-serif;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .mobile-device {
+            width: 100%;
+            max-width: 390px;
+            height: 100vh;
+            max-height: 844px;
+            background: var(--bg-base);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #1A212D;
+        }
+
+        @@media (min-width:400px) {
+            .mobile-device {
+                height: 844px;
+                border-radius: 40px;
+                box-shadow: 0 0 50px rgba(0,0,0,0.8),inset 0 0 0 6px #000;
+            }
+        }
+
+        .bg-glow {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glow-blue {
+            width: 260px;
+            height: 260px;
+            background: rgba(46,123,207,0.12);
+            top: -60px;
+            left: -60px;
+        }
+
+        .glow-teal {
+            width: 200px;
+            height: 200px;
+            background: rgba(70,229,166,0.07);
+            bottom: 100px;
+            right: -60px;
+        }
+
+        .header {
+            padding: 50px 24px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 5;
+        }
+
+        .greeting {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: border-color 0.2s;
+            text-decoration: none;
+        }
+
+            .avatar:hover {
+                border-color: var(--accent-blue);
+            }
+
+        .view-section {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            overflow-y: auto;
+            padding-bottom: 90px;
+            animation: fadeIn 0.2s ease;
+        }
+
+            .view-section.active {
+                display: flex;
+            }
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .balance-card {
+            margin: 0 24px 20px;
+            text-align: center;
+            padding: 20px;
+            background: var(--bg-surface);
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .balance-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .balance-amount {
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -1px;
+        }
+
+        .card-container {
+            padding: 0 24px;
+            perspective: 1000px;
+            margin-bottom: 20px;
+        }
+
+        .virtual-card {
+            background: linear-gradient(135deg,#1C3F6B,#102440);
+            border-radius: 20px;
+            padding: 24px;
+            height: 190px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+            .virtual-card::after {
+                content: '';
+                position: absolute;
+                top: -50%;
+                right: -20%;
+                width: 200px;
+                height: 200px;
+                background: rgba(255,255,255,0.05);
+                border-radius: 50%;
+                filter: blur(20px);
+            }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chip {
+            width: 45px;
+            height: 32px;
+            background: linear-gradient(135deg,#D4AF37,#AA841F);
+            border-radius: 6px;
+            position: relative;
+        }
+
+            .chip::after {
+                content: '';
+                position: absolute;
+                inset: 4px;
+                border: 1px solid rgba(0,0,0,0.2);
+                border-radius: 2px;
+            }
+
+        .card-number {
+            font-size: 18px;
+            letter-spacing: 3px;
+            color: #FFF;
+            font-family: monospace;
+        }
+
+        .card-bottom {
+            display: flex;
+            justify-content: space-between;
+            color: rgba(255,255,255,0.8);
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .pay-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 220px;
+        }
+
+        .pulse-ring {
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: rgba(46,123,207,0.1);
+            animation: ripple 2s infinite cubic-bezier(0.2,0.8,0.2,1);
+            z-index: 1;
+        }
+
+            .pulse-ring:nth-child(2) {
+                animation-delay: 0.6s;
+            }
+
+        @@keyframes ripple {
+            0% {
+                transform: scale(0.8);
+                opacity: 1
+            }
+
+            100% {
+                transform: scale(2.5);
+                opacity: 0
+            }
+        }
+
+        .nfc-btn {
+            width: 90px;
+            height: 90px;
+            background: var(--bg-surface);
+            border: 2px solid var(--accent-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(46,123,207,0.2);
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+
+            .nfc-btn:active {
+                transform: scale(0.95);
+            }
+
+        .nfc-icon {
+            color: var(--accent-blue);
+        }
+
+        .success-icon {
+            display: none;
+            color: var(--accent-green);
+        }
+
+        .nfc-btn.success {
+            border-color: var(--accent-green);
+            background: rgba(70,229,166,0.1);
+            box-shadow: 0 0 40px rgba(70,229,166,0.3);
+        }
+
+        .status-text-pay {
+            margin-top: 30px;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-align: center;
+            height: 20px;
+            z-index: 10;
+        }
+
+        .form-group {
+            padding: 0 24px;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-field {
+            width: 100%;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 16px;
+            margin-bottom: 12px;
+            outline: none;
+            transition: 0.2s;
+            font-family: 'DM Sans',system-ui,sans-serif;
+        }
+
+            .input-field:focus {
+                border-color: var(--accent-blue);
+            }
+
+        .row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            border-radius: 16px;
+            border: none;
+            background: var(--accent-blue);
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: 'DM Sans',system-ui,sans-serif;
+        }
+
+            .btn-primary:active {
+                transform: scale(0.98);
+            }
+
+        .history-list {
+            padding: 0 24px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--bg-surface);
+            border-radius: 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .hi-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: rgba(46,123,207,0.1);
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hi-details {
+            flex: 1;
+            margin: 0 12px;
+        }
+
+        .hi-title {
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 15px;
+        }
+
+        .hi-time {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .hi-amount {
+            font-weight: 700;
+            color: var(--text-main);
+            text-align: right;
+        }
+
+        .hi-sub {
+            font-size: 11px;
+            color: var(--accent-green);
+            margin-top: 4px;
+        }
+
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 80px;
+            background: rgba(16,20,29,0.92);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding-bottom: 15px;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-muted);
+            cursor: pointer;
+            width: 60px;
+        }
+
+            .nav-item.active {
+                color: var(--accent-blue);
+            }
+
+            .nav-item svg {
+                width: 24px;
+                height: 24px;
+                stroke: currentColor;
+                fill: none;
+                stroke-width: 2;
+            }
+
+            .nav-item span {
+                font-size: 11px;
+                font-weight: 500;
+            }
+
+        .auth-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(5,7,10,0.85);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+            .auth-overlay.active {
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+        .face-id-icon {
+            width: 60px;
+            height: 60px;
+            border: 2px solid var(--text-main);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+            .face-id-icon::before {
+                content: '';
+                position: absolute;
+                top: 15px;
+                width: 30px;
+                height: 2px;
+                background: var(--text-main);
+                box-shadow: 0 20px 0 var(--text-main);
+            }
+
+            .face-id-icon::after {
+                content: '';
+                position: absolute;
+                left: 15px;
+                height: 30px;
+                width: 2px;
+                background: var(--text-main);
+                box-shadow: 20px 0 0 var(--text-main);
+            }
+
+        .toast {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            color: var(--text-main);
+            white-space: nowrap;
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s,transform 0.3s;
+        }
+
+            .toast.show {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+
+            .toast.success-toast {
+                border-color: rgba(70,229,166,0.3);
+                color: var(--accent-green);
+            }
+
+        .view-section::-webkit-scrollbar {
+            width: 0;
+        }
 
         .btn-add-funds {
             margin-top: 16px;
@@ -105,6 +578,63 @@
             .btn-add-funds:active {
                 transform: scale(0.98);
             }
+
+        /* ── History loading / empty states ── */
+        .history-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 24px;
+            gap: 12px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @@keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .history-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 24px;
+            gap: 8px;
+        }
+
+            .history-empty svg {
+                opacity: 0.3;
+            }
+
+            .history-empty p {
+                color: var(--text-muted);
+                font-size: 14px;
+            }
+
+        .history-error {
+            padding: 24px;
+            text-align: center;
+            color: var(--danger);
+            font-size: 14px;
+        }
+        .id{
+            color:white;
+            margin:auto;
+            margin-bottom:20px;
+        }
     </style>
 </head>
 <body>
@@ -118,12 +648,13 @@
                 <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
             </a>
         </div>
-
+      
+        <div class="id"><span>ID</span><br>@userId</div>
         <!-- HOME TAB -->
         <div class="view-section active" id="view-home">
             <div class="balance-card">
                 <div class="balance-label">Available Balance</div>
-                <div class="balance-amount" id="displayBalance">@balance.ToString("C")</div>
+                <div class="balance-amount" id="displayBalance">SAR @balance.ToString("N2")</div>
                 <button class="btn-add-funds" onclick="addFunds()">+ Add 100,000 SAR</button>
             </div>
 
@@ -137,10 +668,7 @@
                         </svg>
                     </div>
                     <div class="card-number">•••• •••• •••• @cardLast4</div>
-                    <div class="card-bottom">
-                        <div><span>Name</span><br><span>@fullName</span></div>
-                        <div><span>ID</span><br>@userId</div>
-                    </div>
+                    
                 </div>
             </div>
 
@@ -158,7 +686,7 @@
                         <polyline points="20 6 9 17 4 12" />
                     </svg>
                 </div>
-                <div class="status-text-pay" id="statusText">Hold Near Reader</div>
+                
             </div>
         </div>
 
@@ -182,25 +710,11 @@
         <!-- HISTORY TAB -->
         <div class="view-section" id="view-history">
             <div class="history-list" id="historyContainer">
-                @if (ViewBag.Transactions != null)
-                {
-                    foreach (var tx in (IEnumerable<dynamic>)ViewBag.Transactions)
-                    {
-                        <div class="history-item">
-                            <div class="hi-icon">
-                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>
-                            </div>
-                            <div class="hi-details">
-                                <div class="hi-title">Payment</div>
-                                <div class="hi-time">@tx.CreatedAt.ToString("MMM dd, hh:mm tt")</div>
-                            </div>
-                            <div>
-                                <div class="hi-amount">-@tx.Amount.ToString("N2") SAR</div>
-                                <div class="hi-sub">Confirmed</div>
-                            </div>
-                        </div>
-                    }
-                }
+                <!-- Populated by loadDashboardData() via AJAX -->
+                <div class="history-loading" id="historyLoading">
+                    <div class="spinner"></div>
+                    <span>Loading transactions...</span>
+                </div>
             </div>
         </div>
 
@@ -224,7 +738,7 @@
                 <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>
                 <span>Cards</span>
             </div>
-            <div class="nav-item" onclick="switchTab('history',this)">
+            <div class="nav-item" id="historyNavBtn" onclick="switchTab('history',this)">
                 <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
                 <span>History</span>
             </div>
@@ -239,17 +753,95 @@
             cards: document.getElementById('view-cards'),
             history: document.getElementById('view-history')
         };
-        const titles = { home:'My Wallet', cards:'Manage Cards', history:'Transactions' };
-
+        const homeGreeting = document.getElementById('headerTitle').textContent; // reads "Hi, Abdallah 👋"
+        const titles = { home: homeGreeting, cards: 'Manage Cards', history: 'Transactions' };
+        // ── Tab Switching ────────────────────────────────────────────────
         function switchTab(tabId, el) {
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             el.classList.add('active');
             Object.values(views).forEach(v => v.classList.remove('active'));
             views[tabId].classList.add('active');
             document.getElementById('headerTitle').textContent = titles[tabId] || 'XenoPay';
+
+            // Load history data every time the history tab is opened
+            if (tabId === 'history') {
+                loadDashboardData();
+            }
         }
 
-        /* NFC Payment Flow — calls backend */
+        // ── AJAX: Load Dashboard Data ────────────────────────────────────
+        function loadDashboardData() {
+            const container = document.getElementById('historyContainer');
+
+            // Show spinner
+            container.innerHTML = `
+                        <div class="history-loading" id="historyLoading">
+                            <div class="spinner"></div>
+                            <span>Loading transactions...</span>
+                        </div>`;
+
+            fetch('@Url.Action("GetDashboardData", "Wallet")', {
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+                .then(res => {
+                    if (!res.ok) throw new Error('Server error: ' + res.status);
+                    return res.json();
+                })
+                .then(data => {
+                    // ✅ Update balance on Home tab too
+                    if (data.balance !== undefined) {
+                        document.getElementById('displayBalance').textContent =
+                            new Intl.NumberFormat('en-SA', { style: 'currency', currency: 'SAR' }).format(data.balance);
+                    }
+
+                    // ✅ Render transactions
+                    container.innerHTML = '';
+
+                    if (!data.history || data.history.length === 0) {
+                        container.innerHTML = `
+                                <div class="history-empty">
+                                    <svg viewBox="0 0 24 24" width="48" height="48" stroke="var(--text-muted)" fill="none" stroke-width="1.5">
+                                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                                    </svg>
+                                    <p>No transactions yet.</p>
+                                </div>`;
+                        return;
+                    }
+
+                    data.history.forEach(tx => {
+                        const item = document.createElement('div');
+                        item.className = 'history-item';
+                        item.innerHTML = `
+                                <div class="hi-icon">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2">
+                                        <rect x="1" y="4" width="22" height="16" rx="2"/>
+                                        <line x1="1" y1="10" x2="23" y2="10"/>
+                                    </svg>
+                                </div>
+                                <div class="hi-details">
+                                    <div class="hi-title">Payment</div>
+                                    <div class="hi-time">${tx.time}</div>
+                                </div>
+                                <div>
+                                    <div class="hi-amount">-${parseFloat(tx.amountSAR).toFixed(2)} SAR</div>
+                                    <div class="hi-sub">Confirmed</div>
+                                </div>`;
+                        container.appendChild(item);
+                    });
+                })
+                .catch(err => {
+                    console.error('Failed to load dashboard data:', err);
+                    container.innerHTML = `
+                            <div class="history-error">
+                                Failed to load transactions.<br>
+                                <button class="btn-primary" style="margin-top:12px;width:auto;padding:10px 20px;font-size:14px;"
+                                    onclick="loadDashboardData()">Retry</button>
+                            </div>`;
+                });
+        }
+
+        // ── NFC Payment Flow ────────────────────────────────────────────
         const nfcBtn = document.getElementById('nfcBtn');
         const ring1 = document.getElementById('ring1');
         const ring2 = document.getElementById('ring2');
@@ -268,7 +860,6 @@
                 authOv.classList.remove('active');
                 statusText.textContent = 'Processing...';
                 statusText.style.color = 'var(--text-main)';
-                // In a real NFC scenario the terminal initiates; this is a demo trigger only.
                 setTimeout(() => {
                     iconNfc.style.display = 'none';
                     iconSuc.style.display = 'block';
@@ -285,10 +876,12 @@
             isProcessing = false;
             iconSuc.style.display = 'none'; iconNfc.style.display = 'block';
             nfcBtn.classList.remove('success');
-            statusText.textContent = 'Hold Near Reader'; statusText.style.color = 'var(--text-muted)';
+            statusText.textContent = 'Hold Near Reader';
+            statusText.style.color = 'var(--text-muted)';
             ring1.style.display = 'block'; ring2.style.display = 'block';
         }
 
+        // ── Toast ────────────────────────────────────────────────────────
         let toastTimer;
         function showToast(msg, success = false) {
             const el = document.getElementById('toastEl');
@@ -297,7 +890,8 @@
             clearTimeout(toastTimer);
             toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
         }
-        // ✅ Add this inside the <script> block in Index.cshtml
+
+        // ── Add Card ─────────────────────────────────────────────────────
         async function saveCard() {
             const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
             const expiry = document.querySelector('input[name="Expiry"]').value;
@@ -323,21 +917,19 @@
             }
         }
 
+        // ── Add Funds ────────────────────────────────────────────────────
         async function addFunds() {
             try {
-                const response = await fetch('/Wallet/AddFunds', {
+                const response = await fetch('@Url.Action("AddFunds", "Wallet")', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ amount: 100000 })
                 });
 
                 const result = await response.json();
 
                 if (result.success) {
-                    // Update balance display
-                    document.getElementById('displayBalance').innerText =
+                    document.getElementById('displayBalance').textContent =
                         new Intl.NumberFormat('en-SA', { style: 'currency', currency: 'SAR' }).format(result.newBalance);
                     showToast('Funds added successfully!', true);
                 }

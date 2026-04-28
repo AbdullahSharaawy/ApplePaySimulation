@@ -269,7 +269,6 @@
                         <div class="receipt-row"><span class="rl">Customer paid</span><span class="rv" id="sucFrom" style="color:var(--color-text-tertiary)">—</span></div>
                         <div class="receipt-row"><span class="rl">Rate</span><span class="rv" id="sucRate" style="color:var(--color-text-tertiary)">—</span></div>
                         <div class="receipt-row"><span class="rl">Buyer ID</span><span class="rv" id="sucBuyer" style="font-size:12px;color:var(--color-text-tertiary)">—</span></div>
-                        <div class="receipt-row"><span class="rl">Ref</span><span class="rv" id="sucRef" style="font-size:11px;color:var(--color-text-tertiary)">—</span></div>
                         <div class="receipt-row total"><span class="rl" style="font-weight:500;color:var(--color-text-primary)">Total SAR</span><span class="rv" id="sucNet">—</span></div>
                     </div>
                     <button class="btn-main" onclick="reset()">New payment</button>
@@ -414,15 +413,35 @@
             goStep(0);
         }
 
-        function openHist() {
+        async function openHist() {
             const el = document.getElementById('histList');
-            el.innerHTML = txs.length ? txs.map(t => `
-                <div class="hist-item">
-                    <div><div style="font-size:13px;color:var(--color-text-primary)">${t.time} <span style="font-size:11px;color:var(--color-text-tertiary)">${t.buyer}</span></div><div class="hi-ref">${t.ref}</div></div>
-                    <div class="hi-right"><div class="hi-sar">${parseFloat(t.net).toLocaleString('en',{minimumFractionDigits:2})} SAR</div><div class="hi-from">${t.from}</div></div>
-                </div>`).join('') : '<div class="modal-empty">No transactions yet</div>';
+            el.innerHTML = '<div class="modal-empty">Loading...</div>';
             document.getElementById('histBackdrop').classList.add('open');
+
+            try {
+                const res = await fetch('@Url.Action("GetHistory", "Terminal")');
+                const data = await res.json();
+
+                if (!data.success || !data.transactions.length) {
+                    el.innerHTML = '<div class="modal-empty">No transactions yet</div>';
+                    return;
+                }
+
+                el.innerHTML = data.transactions.map(t => `
+                    <div class="hist-item">
+                        <div>
+                            <div style="font-size:13px;color:var(--color-text-primary)">${t.createdAt}</div>
+                            <div class="hi-ref" style="text-transform:capitalize">${t.type}</div>
+                        </div>
+                        <div class="hi-right">
+                            <div class="hi-sar">${parseFloat(t.amount).toLocaleString('en', { minimumFractionDigits: 2 })} SAR</div>
+                        </div>
+                    </div>`).join('');
+            } catch {
+                el.innerHTML = '<div class="modal-empty" style="color:var(--color-text-danger)">Failed to load history</div>';
+            }
         }
+
 
         function openWallet() {
             window.open('@Url.Action("Index", "Wallet")', '_blank');

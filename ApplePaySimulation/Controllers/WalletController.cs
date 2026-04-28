@@ -87,7 +87,7 @@ namespace ApplePaySimulation.Controllers
             {
                 balance = user.WalletBalance,
                 cardLastFour = activeCard?.CardNumber ?? "None",
-                history = history
+                history
             });
         }
 

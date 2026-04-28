@@ -13,7 +13,7 @@ namespace ApplePaySimulation.Database.Entities
         [Display(Name = "Date & Time")]
 
         public DateTime CreatedAt { get; set; }= DateTime.Now;
-
+        public string TransactionType { get; set; } 
         // Foreign Key
         [Required]
         [ForeignKey("CreditCard")]

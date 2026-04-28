@@ -32,6 +32,37 @@ namespace ApplePaySimulation.Controllers
         {
             return View();
         }
+        // Add this action inside TerminalController, after ProcessPayment
+        [HttpGet]
+        public async Task<IActionResult> GetHistory()
+        {
+            try
+            {
+                string sellerId = _configuration["SELLERID"];
+
+                var sellerCards = await _cardRepo.GetAllByFilter(c => c.UserId == sellerId);
+                var sellerCard = sellerCards.FirstOrDefault();
+                if (sellerCard == null)
+                    return Json(new { success = false, transactions = Array.Empty<object>() });
+
+                var transactions = await _transactionRepo.GetAllByFilter(t => t.CreditCardId == sellerCard.Id);
+
+                var result = transactions
+                    .OrderByDescending(t => t.CreatedAt)
+                    .Select(t => new
+                    {
+                        amount = t.Amount,
+                        type = t.TransactionType,
+                        createdAt = t.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")
+                    });
+
+                return Json(new { success = true, transactions = result });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
 
         // POST /Terminal/ProcessPayment  (called by fetch() in the terminal JS)
         [HttpPost]
@@ -60,6 +91,12 @@ namespace ApplePaySimulation.Controllers
                 if (buyer.WalletBalance < request.AmountSAR)
                     return BadRequest("Insufficient funds in buyer's wallet.");
 
+                //  Get the Buyer and their linked Credit Card
+                var buyerCards = await _cardRepo.GetAllByFilter(c => c.UserId == buyerId);
+                var buyerCard = buyerCards.FirstOrDefault();
+                if (buyerCard == null)
+                    return BadRequest("Buyer  is not configured properly.");
+
                 // 3. Process the financial transfer
                 decimal fee = int.Parse(_configuration["Fee"] ?? "0");
                 buyer.WalletBalance -= (request.AmountSAR + fee);
@@ -69,19 +106,27 @@ namespace ApplePaySimulation.Controllers
                 await _userRepo.UpdateAsync(seller);
 
                 // 4. Create the Transaction Record
-                var transaction = new Transaction
+                var SellerTransaction = new Transaction
                 {
                     Amount = request.AmountSAR,
                     CreatedAt = DateTime.Now,
-                    CreditCardId = sellerCard.Id
+                    CreditCardId = sellerCard.Id,
+                    TransactionType = "receive"
                 };
-                await _transactionRepo.Create(transaction);
-
+                var BuyerTransaction = new Transaction
+                {
+                    Amount = request.AmountSAR,
+                    CreatedAt = DateTime.Now,
+                    CreditCardId = buyerCard.Id,
+                    TransactionType="send"
+                };
+                await _transactionRepo.Create(SellerTransaction);
+                await _transactionRepo.Create(BuyerTransaction);
                 return Json(new
                 {
                     success = true,
-                    message = "Payment successful",
-                    reference = $"XN-{Guid.NewGuid().ToString().Substring(0, 6).ToUpper()}"
+                    message = "Payment successful"
+                   
                 });
             }
             catch (Exception ex)
